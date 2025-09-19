@@ -1,0 +1,60 @@
+openMetadataServerConfig:
+  clusterName: "governance-demo"
+  httpConfiguration:
+    host: "0.0.0.0"
+    port: 8585
+  authConfiguration:
+    provider: "no_auth"
+  database:
+    host: "postgres"
+    port: 5432
+    username: "openmetadata_user"
+    password: "openmetadata_password"
+    databaseName: "openmetadata_db"
+    dbScheme: "postgresql"
+    driverClass: "org.postgresql.Driver"
+    sslMode: "DISABLED"
+    maxPoolSize: 20
+  elasticSearchConfiguration:
+    host: "elasticsearch"
+    port: 9200
+    scheme: "http"
+    trustStoreConfig: null
+  eventHandlerConfiguration:
+    enabled: true
+    server: "kafka"
+    clusterName: "governance-demo"
+    config:
+      bootstrapServers: "kafka:9092"
+      securityConfig: null
+      adminClientConfig: {}
+      producerConfig: {}
+      consumerConfig: {}
+    topics:
+      entityChangeEvent: "om_entity_change"
+      entityExtensionEvent: "om_entity_extension"
+      ingestionPipelineStatus: "om_ingestion_pipeline_status"
+      taskWorkflow: "om_task_workflow"
+      metadataJob: "om_metadata_job"
+  pipelineServiceClientConfiguration:
+    enabled: false
+    supportsUpdates: false
+    className: "org.openmetadata.service.clients.pipeline.MetadataServerClient"
+  changeEventConfig:
+    aggregatorEnabled: true
+  lineageConfiguration:
+    enabled: true
+  searchType: "elasticsearch"
+  elasticsearchMigrationConfiguration:
+    reindexAll: false
+    forceReindex: false
+  uiServer:
+    host: "http://localhost"
+    port: 8585
+
+logging:
+  level: INFO
+  appenders:
+    - type: console
+      threshold: INFO
+      timeZone: UTC

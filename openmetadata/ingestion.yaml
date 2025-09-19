@@ -1,0 +1,35 @@
+source:
+  type: postgres
+  serviceName: governance-metadata
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: postgres:5432
+      username: metadata_admin
+      password: metadata_admin
+      database: governance_catalog
+      scheme: postgresql
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      includeTables: false
+      includeViews: true
+      schemaFilterPattern:
+        includes:
+          - public
+      tableFilterPattern:
+        includes:
+          - vw_catalog_dataset
+          - vw_permissible_use
+          - vw_governance_assignments
+          - vw_data_access_request
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  openMetadataServerConfig:
+    hostPort: http://openmetadata_server:8585/api
+    authProvider: no_auth
+    securityConfig: {}
+  loggerLevel: INFO
+  enableDebugLog: false

@@ -1,0 +1,159 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: governance-postgres
+    environment:
+      POSTGRES_DB: governance_catalog
+      POSTGRES_USER: metadata_admin
+      POSTGRES_PASSWORD: metadata_admin
+      TZ: UTC
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U metadata_admin -d governance_catalog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: governance-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "srvr,ruok,stat"
+    ports:
+      - "2181:2181"
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181 | grep Mode"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: governance-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_BYTES: -1
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.9
+    container_name: governance-elasticsearch
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+      xpack.security.enabled: "false"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  openmetadata_server:
+    image: openmetadata/server:1.3.1
+    container_name: governance-openmetadata-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      OPENMETADATA_DB_USER: openmetadata_user
+      OPENMETADATA_DB_PASSWORD: openmetadata_password
+      OPENMETADATA_DB_HOST: postgres
+      OPENMETADATA_DB_PORT: 5432
+      OPENMETADATA_DB_SCHEME: postgresql
+      OPENMETADATA_DB_DATABASE: openmetadata_db
+      OPENMETADATA_DB_DRIVER: org.postgresql.Driver
+      OPENMETADATA_DB_DRIVERCLASS: org.postgresql.Driver
+      OPENMETADATA_DB_URL: jdbc:postgresql://postgres:5432/openmetadata_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: openmetadata_user
+      DB_PASSWORD: openmetadata_password
+      DB_DATABASE: openmetadata_db
+      DB_SCHEME: postgresql
+      DB_DRIVER: org.postgresql.Driver
+      DB_DRIVER_CLASS: org.postgresql.Driver
+      DB_URL: jdbc:postgresql://postgres:5432/openmetadata_db
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_SCHEME: http
+      OPENMETADATA_CLUSTER_NAME: governance-demo
+      OPENMETADATA_CONFIG_FILE_PATH: /openmetadata/conf/openmetadata.yaml
+    volumes:
+      - ./openmetadata/openmetadata.yaml:/openmetadata/conf/openmetadata.yaml:ro
+    ports:
+      - "8585:8585"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8585/api/v1/system/version >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  openmetadata_ingestion:
+    image: openmetadata/ingestion:1.3.1
+    container_name: governance-openmetadata-ingestion
+    depends_on:
+      openmetadata_server:
+        condition: service_healthy
+    environment:
+      OPENMETADATA_SERVER_HOST: http://openmetadata_server:8585/api
+      OPENMETADATA_SERVER_AUTH_PROVIDER: no_auth
+      OPENMETADATA_CONFIG_FILE_PATH: /openmetadata/conf/openmetadata.yaml
+      INGESTION_DEPLOYMENT_CONFIG: /openmetadata-ingestion/ingestion.yaml
+      OPENMETADATA_DB_DRIVER: org.postgresql.Driver
+      OPENMETADATA_DB_DRIVERCLASS: org.postgresql.Driver
+      OPENMETADATA_DB_URL: jdbc:postgresql://postgres:5432/openmetadata_db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: openmetadata_user
+      DB_PASSWORD: openmetadata_password
+      DB_DATABASE: openmetadata_db
+      DB_SCHEME: postgresql
+      DB_DRIVER: org.postgresql.Driver
+      DB_DRIVER_CLASS: org.postgresql.Driver
+      DB_URL: jdbc:postgresql://postgres:5432/openmetadata_db
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      ELASTICSEARCH_SCHEME: http
+    volumes:
+      - ./openmetadata/openmetadata.yaml:/openmetadata/conf/openmetadata.yaml:ro
+      - ./openmetadata/ingestion.yaml:/openmetadata-ingestion/ingestion.yaml:ro
+      - ./openmetadata/profiles:/openmetadata-ingestion/profiles
+    command: ["metadata", "ingest", "-c", "/openmetadata-ingestion/ingestion.yaml"]
+
+volumes:
+  pgdata:
