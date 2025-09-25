@@ -99,7 +99,7 @@ flowchart LR
 
     subgraph Governance Warehouse
         Harvest[Harvest & Transform Jobs]
-        PG[(PostgreSQL<br/>governance_catalog)]
+        PG[(PostgreSQL\ngovernance_catalog)]
         Views[Curated Views]
         Tables[Base Tables]
     end
@@ -110,8 +110,8 @@ flowchart LR
     end
 
     subgraph OpenMetadata Stack
-        OMIngest[Ingestion CLI<br/>(metadata ingest)]
-        OMProfile[Profiler CLI<br/>(metadata profile)]
+        OMIngest["Ingestion CLI\n(metadata ingest)"]
+        OMProfile["Profiler CLI\n(metadata profile)"]
         OMUI[OpenMetadata UI]
     end
 
