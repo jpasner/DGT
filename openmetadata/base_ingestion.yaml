@@ -14,17 +14,32 @@ source:
       type: DatabaseMetadata
       markDeletedTables: false
       markDeletedStoredProcedures: false
-      includeTables: false
-      includeViews: true
+      includeTables: true
+      includeViews: false
       schemaFilterPattern:
         includes:
           - public
       tableFilterPattern:
         includes:
-          - vw_catalog_dataset
-          - vw_permissible_use
-          - vw_governance_assignments
-          - vw_data_access_request
+          - agency
+          - dataset
+          - distribution
+          - tag
+          - dataset_tag
+          - policy
+          - policy_clause
+          - dataset_policy
+          - permissible_use
+          - permissible_use_condition
+          - security_marking
+          - dataset_security_marking
+          - governance_role
+          - person
+          - role_assignment
+          - decision_log
+          - data_access_request
+          - dataset_lineage
+          - glossary_term
 sink:
   type: metadata-rest
   config: {}

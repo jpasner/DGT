@@ -1,0 +1,104 @@
+source:
+  type: postgres
+  serviceName: governance-metadata
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: postgres:5432
+      username: metadata_admin
+      authType:
+        password: metadata_admin
+      database: governance_catalog
+  sourceConfig:
+    config:
+      type: Profiler
+      generateSampleData: true
+      profileSample: 100
+      schemaFilterPattern:
+        includes:
+          - public
+      tableFilterPattern:
+        includes:
+          - vw_catalog_dataset
+          - vw_permissible_use
+          - vw_governance_assignments
+          - vw_data_access_request
+          - agency
+          - dataset
+          - distribution
+          - tag
+          - dataset_tag
+          - policy
+          - policy_clause
+          - dataset_policy
+          - permissible_use
+          - permissible_use_condition
+          - security_marking
+          - dataset_security_marking
+          - governance_role
+          - person
+          - role_assignment
+          - decision_log
+          - data_access_request
+          - dataset_lineage
+          - glossary_term
+processor:
+  type: orm-profiler
+  config:
+    tableConfig:
+      - fullyQualifiedName: governance-metadata.public.vw_catalog_dataset
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.vw_permissible_use
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.vw_governance_assignments
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.vw_data_access_request
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.agency
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.dataset
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.distribution
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.tag
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.dataset_tag
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.policy
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.policy_clause
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.dataset_policy
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.permissible_use
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.permissible_use_condition
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.security_marking
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.dataset_security_marking
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.governance_role
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.person
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.role_assignment
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.decision_log
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.data_access_request
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.dataset_lineage
+        profileSample: 100
+      - fullyQualifiedName: governance-metadata.public.glossary_term
+        profileSample: 100
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  openMetadataServerConfig:
+    hostPort: http://openmetadata_server:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJlbWFpbCI6ImluZ2VzdGlvbi1ib3RAb3Blbm1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NTgzMDE2OTQsImV4cCI6bnVsbH0.cTtsCpTmGmxyCt1IpSJ012YnjDn4coaPVAr1fkhp5KQ0Wubj-1nt_oTNjtqbHOFILWq6NePch2TsSgK94xEC30eenS9AbttvP-8Hcm72QTUaU3185D4yxWuy-mtedyidbgZvvIBN9SBfFNEQJNjP_VfvVEr-cvmngcY0CgwL07j6VbcZmXPbOBtjWTW_U7Eutugm-APxQYLA3Pu8xCmOGEIbn2cMeuxXdyaWW2S36tWf7wIt-e3U8GlTmr69Nn8y_1Jh2kWWmHwTNGgcuXDQE6jYKcrK9J1AOHeACr5Obq90tk60I9jSURCv1v0VCoSLttMBCG0VwmRbjJGWSaPMGw
+  loggerLevel: INFO

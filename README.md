@@ -14,6 +14,8 @@ Use this stack to iterate on governance playbooks, validate policy controls, and
 - `db/init/` — SQL bootstrap scripts that create the governance schema, views, and seed data.
 - `openmetadata/openmetadata.yaml` — OpenMetadata server configuration pointing to PostgreSQL.
 - `openmetadata/ingestion.yaml` — Ingestion workflow that registers governance views in the catalog.
+- `openmetadata/base_ingestion.yaml` — Ingestion workflow that captures the base governance tables.
+- `openmetadata/profiler.yaml` — Profiler workflow that builds sample data and column statistics for the UI.
 - `docs/architecture.md` — High-level architecture and data model overview.
 
 ## Prerequisites
@@ -24,30 +26,39 @@ Use this stack to iterate on governance playbooks, validate policy controls, and
 
 ## Quick Start
 
-1. **Start the stack**
+1. **Prime the Airflow metadata database (first run only)**
+   ```bash
+   docker compose up airflow-init
+   ```
+   This container runs once to migrate Airflow's schema and create an admin user (`admin` / `admin`). Subsequent starts can skip this step unless you wipe the `airflow_db` database.
+
+2. **Start the stack**
    ```bash
    docker compose up -d
    ```
-   The first run initializes the PostgreSQL cluster, creates two databases (`governance_catalog` and `openmetadata_db`), runs schema migrations, and seeds governance reference data. OpenMetadata boots after the dependent services pass their health checks (this can take a couple of minutes the first time).
+   The first run initializes the PostgreSQL cluster, creates the governance (`governance_catalog`), OpenMetadata (`openmetadata_db`), and Airflow (`airflow_db`) databases, seeds governance reference data, and brings up Airflow + OpenMetadata. Allow a few minutes for all health checks to turn green.
 
-2. **Run OpenMetadata's bootstrap migrations (first run only)**
+3. **Run OpenMetadata's bootstrap migrations (first run only)**
    ```bash
    docker compose run --rm --entrypoint /bin/bash openmetadata_server -lc './bootstrap/bootstrap_storage.sh migrate-all'
    ```
    This seeds the OpenMetadata application schema inside the `openmetadata_db` database and initializes Elasticsearch indexes. Re-run only if you reset the metadata database.
 
-3. **Run the ingestion job (as needed)**
-   ```bash
-   docker compose run --rm openmetadata_ingestion metadata ingest -c /openmetadata-ingestion/ingestion.yaml
-   ```
-   This command reads the curated views (`vw_catalog_dataset`, `vw_permissible_use`, `vw_governance_assignments`, `vw_data_access_request`) from the `governance_catalog` database and publishes them into the OpenMetadata catalog. Re-run whenever the warehouse content changes.
+4. **Trigger Airflow ingestion & profiling (on demand)**
+   - Browse to http://localhost:8080 and log in (`admin` / `admin`).
+   - Open the **governance_metadata_ingestion** DAG and click **Trigger DAG** to run both metadata ingestion and the profiler in sequence.
+   - Task `ingest_openmetadata_views` executes the `metadata ingest` CLI (config in `openmetadata/ingestion.yaml`) to synchronize curated views and generate sample rows.
+   - Task `profile_openmetadata_views` runs `metadata profile` (config in `openmetadata/profiler.yaml`) to compute column statistics and persist sample data for the Profiler & Data Quality tabs.
+   - If you ever regenerate the `ingestion-bot` token, update both YAML files so the DAG continues to authenticate.
+   - To publish base governance tables, trigger the **governance_base_table_ingestion** DAG; it uses `openmetadata/base_ingestion.yaml` to ingest core relational tables.
+   - Scheduling is set to `0 6 * * *` (daily at 06:00). Adjust the DAG to fit your cadence.
 
-4. **Explore the catalog**
+5. **Explore the catalog**
    - Open http://localhost:8585 in a browser.
    - Log in with the default `no_auth` (no credentials required) setup.
    - Search for the `governance-metadata` service to explore the registered views.
 
-5. **Inspect the warehouse (optional)**
+6. **Inspect the warehouse (optional)**
    ```bash
    docker compose exec postgres psql -U metadata_admin -d governance_catalog
    ```
@@ -78,12 +89,19 @@ Details and relationship diagrams live in [`docs/architecture.md`](docs/architec
   - Databases:
     - `governance_catalog`: holds the governance schema and views.
     - `openmetadata_db`: reserved for OpenMetadata application tables.
+    - `airflow_db`: Airflow metadata database.
+  - Extensions: `uuid-ossp`, `pgcrypto`, and `pg_stat_statements` are installed automatically; the latter underpins query-usage reporting in OpenMetadata.
   - Initialization scripts run only on first bootstrap (they are mounted read-only under `db/init/`).
 
 - **OpenMetadata**
   - Uses `openmetadata/openmetadata.yaml` to target PostgreSQL, Kafka, and Elasticsearch.
   - Authentication provider is `no_auth` for local demos; swap for SSO or JWT in production pilots.
   - The ingestion container is configured for ad-hoc runs; integrate with Airflow or the OpenMetadata workflow UI for scheduled jobs.
+
+- **Airflow**
+  - Web UI: http://localhost:8080 (`admin` / `admin`).
+  - Runs the `governance_metadata_ingestion` DAG (views + profiler) and `governance_base_table_ingestion` DAG (core tables).
+  - DAGs live under `airflow/dags`; edit schedules (`0 6 * * *` for views, `0 5 * * *` for base tables) or add upstream harvest jobs as needed.
 
 ## Next Steps
 
@@ -110,6 +128,7 @@ Details and relationship diagrams live in [`docs/architecture.md`](docs/architec
 
 - **OpenMetadata server fails to start** — ensure Docker has sufficient RAM; check logs via `docker compose logs openmetadata_server`.
 - **Ingestion errors** — run the ingestion service manually (see Quick Start step 2) and inspect logs for PostgreSQL connectivity or schema typos.
+- **Profiler task fails** — ensure `/opt/airflow/openmetadata/profiler.yaml` mounts correctly (see docker volumes) and the JWT token inside matches the current `ingestion-bot` token; re-trigger the DAG after updating.
 - **Database migrations re-run** — remove the `pgdata` volume (`docker compose down -v`) if you need a clean rebuild.
 
 ## License

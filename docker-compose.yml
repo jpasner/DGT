@@ -117,11 +117,90 @@ services:
     ports:
       - "8585:8585"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsSL http://localhost:8585/api/v1/system/version >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8585/api/v1/system/version >/dev/null || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10
       start_period: 30s
+
+  airflow-init:
+    image: openmetadata/ingestion:1.3.1
+    container_name: governance-airflow-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW_HOME: /opt/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: 3x6Yp2Zp6qQ0S5n8uV6wX6yB8t2J4o8K
+      AIRFLOW__WEBSERVER__SECRET_KEY: 8c7f3c2e9d1a4b5c6e7f8a9b0c1d2e3f
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_db
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_db
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./openmetadata/ingestion.yaml:/opt/airflow/openmetadata/ingestion.yaml:ro
+      - ./openmetadata/base_ingestion.yaml:/opt/airflow/openmetadata/base_ingestion.yaml:ro
+      - ./openmetadata/profiler.yaml:/opt/airflow/openmetadata/profiler.yaml:ro
+    entrypoint: /bin/bash
+    command: -lc "airflow db migrate && airflow users create --username admin --password admin --firstname Air --lastname Flow --role Admin --email admin@example.org || true"
+
+  airflow-webserver:
+    image: openmetadata/ingestion:1.3.1
+    container_name: governance-airflow-webserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW_HOME: /opt/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: 3x6Yp2Zp6qQ0S5n8uV6wX6yB8t2J4o8K
+      AIRFLOW__WEBSERVER__SECRET_KEY: 8c7f3c2e9d1a4b5c6e7f8a9b0c1d2e3f
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_db
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_db
+      AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: 10
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./openmetadata/ingestion.yaml:/opt/airflow/openmetadata/ingestion.yaml:ro
+      - ./openmetadata/base_ingestion.yaml:/opt/airflow/openmetadata/base_ingestion.yaml:ro
+      - ./openmetadata/profiler.yaml:/opt/airflow/openmetadata/profiler.yaml:ro
+    ports:
+      - "8080:8080"
+    command: ["webserver"]
+    restart: unless-stopped
+
+  airflow-scheduler:
+    image: openmetadata/ingestion:1.3.1
+    container_name: governance-airflow-scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW_HOME: /opt/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: 3x6Yp2Zp6qQ0S5n8uV6wX6yB8t2J4o8K
+      AIRFLOW__WEBSERVER__SECRET_KEY: 8c7f3c2e9d1a4b5c6e7f8a9b0c1d2e3f
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_db
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow_db
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./openmetadata/ingestion.yaml:/opt/airflow/openmetadata/ingestion.yaml:ro
+      - ./openmetadata/base_ingestion.yaml:/opt/airflow/openmetadata/base_ingestion.yaml:ro
+      - ./openmetadata/profiler.yaml:/opt/airflow/openmetadata/profiler.yaml:ro
+    command: ["scheduler"]
+    restart: unless-stopped
 
   openmetadata_ingestion:
     image: openmetadata/ingestion:1.3.1
@@ -152,6 +231,8 @@ services:
     volumes:
       - ./openmetadata/openmetadata.yaml:/openmetadata/conf/openmetadata.yaml:ro
       - ./openmetadata/ingestion.yaml:/openmetadata-ingestion/ingestion.yaml:ro
+      - ./openmetadata/base_ingestion.yaml:/openmetadata-ingestion/base_ingestion.yaml:ro
+      - ./openmetadata/profiler.yaml:/openmetadata-ingestion/profiler.yaml:ro
       - ./openmetadata/profiles:/openmetadata-ingestion/profiles
     command: ["metadata", "ingest", "-c", "/openmetadata-ingestion/ingestion.yaml"]
 

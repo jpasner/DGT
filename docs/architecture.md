@@ -14,8 +14,9 @@
    - Synchronizes with the PostgreSQL warehouse via an ingestion connector.
 3. **Ingestion & Enrichment Pipelines**
    - Periodically pull metadata from Data.gov APIs.
-   - Map harvested metadata into normalized tables.
-   - Enrich records with governance roles/responsibilities from the Transformation Policy Framework.
+ - Map harvested metadata into normalized tables.
+ - Enrich records with governance roles/responsibilities from the Transformation Policy Framework.
+  - Orchestrated by Apache Airflow (running inside the stack) which schedules the OpenMetadata ingestion DAG and can be extended to include harvest/enrichment tasks.
 4. **Governance Policy Services (Future)**
    - APIs that surface decision logs, approval workflows, and privacy reviews tied to catalog entries.
 
@@ -86,11 +87,52 @@ erDiagram
 1. **Harvest**: Scheduled job pulls JSON metadata from Data.gov CKAN API and normalizes into staging tables.
 2. **Transform**: ETL scripts harmonize field names, deduplicate datasets, and populate the core tables.
 3. **Enrich**: Governance policy mapping applies roles, permissible uses, and security markings based on the Transformation Policy Framework.
-4. **Publish**: OpenMetadata ingestion pipeline reads from PostgreSQL views and publishes curated metadata to the catalog UI.
-5. **Monitor**: Audit tables capture policy decisions, access requests, and lineage events for compliance reporting.
+4. **Publish**: OpenMetadata ingestion pipelines (scheduled via Airflow) read from PostgreSQL views and base tables, publishing curated metadata and foundational governance entities into the catalog UI while capturing sample rows.
+5. **Profile**: OpenMetadata's profiler runs after the view ingestion DAG to compute column statistics and populate data-quality tabs.
+6. **Monitor**: Audit tables capture policy decisions, access requests, and lineage events for compliance reporting.
+
+```mermaid
+flowchart LR
+    subgraph Source Systems
+        DG[Data.gov APIs]
+    end
+
+    subgraph Governance Warehouse
+        Harvest[Harvest & Transform Jobs]
+        PG[(PostgreSQL<br/>governance_catalog)]
+        Views[Curated Views]
+        Tables[Base Tables]
+    end
+
+    subgraph Airflow Orchestration
+        DAG1[governance_metadata_ingestion DAG]
+        DAG2[governance_base_table_ingestion DAG]
+    end
+
+    subgraph OpenMetadata Stack
+        OMIngest[Ingestion CLI<br/>(metadata ingest)]
+        OMProfile[Profiler CLI<br/>(metadata profile)]
+        OMUI[OpenMetadata UI]
+    end
+
+    DG --> Harvest --> PG
+    PG --> Views
+    PG --> Tables
+    Views --> DAG1
+    Tables --> DAG2
+    DAG1 --> OMIngest
+    DAG1 --> OMProfile
+    DAG2 --> OMIngest
+    DAG2 --> OMProfile
+    OMIngest --> OMUI
+    OMProfile --> OMUI
+
+    PG -. query stats .-> StatExt[pg_stat_statements]
+    StatExt -. usage metrics .-> OMIngest
+```
 
 ## Integration Touchpoints
-- **OpenMetadata Database Connector**: Configure the OpenMetadata `databaseService` to connect to the PostgreSQL instance, exposing curated views (`vw_catalog_dataset`, `vw_permissible_use`, etc.).
+- **OpenMetadata Database Connector**: Configure the OpenMetadata `databaseService` to connect to the PostgreSQL instance, exposing curated views (`vw_catalog_dataset`, `vw_permissible_use`, etc.) alongside the base governance tables.
 - **Lineage & Glossary**: Map governance roles to OpenMetadata Glossary terms for policy awareness; use the taxonomy to surface permissible use categories.
 - **Security & Privacy Operations**: Export security markings to downstream systems (e.g., data lake access controls) via API endpoints (future work).
 
