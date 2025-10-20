@@ -56,6 +56,13 @@ Use this stack to iterate on governance playbooks, validate policy controls, and
    SELECT * FROM governance_role;
    SELECT * FROM vw_catalog_dataset;
    ```
+   
+5. **Develop the schema**
+   Use this command to input the sample data, then run ingest metadata DAG at Airflow WebUI to ingest the changes.
+   ```bash
+   docker compose exec -T postgres psql -U metadata_admin -d governance_catalog < scripts/sample_metadata.sql
+   ```
+   
 
 ## Data Model Highlights
 
