@@ -26,7 +26,6 @@ with DAG(
     ingest_views = BashOperator(
         task_id="ingest_openmetadata_views",
         bash_command=(
-            "OPENMETADATA_SERVER_AUTH_PROVIDER=no_auth "
             "metadata ingest -c /opt/airflow/openmetadata/ingestion.yaml"
         ),
     )
@@ -34,7 +33,6 @@ with DAG(
     profile_views = BashOperator(
         task_id="profile_openmetadata_views",
         bash_command=(
-            "OPENMETADATA_SERVER_AUTH_PROVIDER=no_auth "
             "metadata profile -c /opt/airflow/openmetadata/profiler.yaml"
         ),
     )

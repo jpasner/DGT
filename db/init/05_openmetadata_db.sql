@@ -8,17 +8,13 @@ BEGIN
 END
 $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-      SELECT 1 FROM pg_database WHERE datname = 'openmetadata_db'
-  ) THEN
-    CREATE DATABASE openmetadata_db OWNER openmetadata_user;
-  ELSE
-    ALTER DATABASE openmetadata_db OWNER TO openmetadata_user;
-  END IF;
-END
-$$;
+SELECT 'CREATE DATABASE openmetadata_db OWNER openmetadata_user'
+WHERE NOT EXISTS (
+    SELECT 1 FROM pg_database WHERE datname = 'openmetadata_db'
+)
+\gexec
+
+ALTER DATABASE openmetadata_db OWNER TO openmetadata_user;
 
 GRANT ALL PRIVILEGES ON DATABASE openmetadata_db TO openmetadata_user;
 

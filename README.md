@@ -26,25 +26,13 @@ Use this stack to iterate on governance playbooks, validate policy controls, and
 
 ## Quick Start
 
-1. **Prime the Airflow metadata database (first run only)**
-   ```bash
-   docker compose up airflow-init
-   ```
-   This container runs once to migrate Airflow's schema and create an admin user (`admin` / `admin`). Subsequent starts can skip this step unless you wipe the `airflow_db` database.
-
-2. **Start the stack**
+1. **Start the stack**
    ```bash
    docker compose up -d
    ```
    The first run initializes the PostgreSQL cluster, creates the governance (`governance_catalog`), OpenMetadata (`openmetadata_db`), and Airflow (`airflow_db`) databases, seeds governance reference data, and brings up Airflow + OpenMetadata. Allow a few minutes for all health checks to turn green.
 
-3. **Run OpenMetadata's bootstrap migrations (first run only)**
-   ```bash
-   docker compose run --rm --entrypoint /bin/bash openmetadata_server -lc './bootstrap/bootstrap_storage.sh migrate-all'
-   ```
-   This seeds the OpenMetadata application schema inside the `openmetadata_db` database and initializes Elasticsearch indexes. Re-run only if you reset the metadata database.
-
-4. **Trigger Airflow ingestion & profiling (on demand)**
+2. **Trigger Airflow ingestion & profiling (on demand)**
    - Browse to http://localhost:8080 and log in (`admin` / `admin`).
    - Open the **governance_metadata_ingestion** DAG and click **Trigger DAG** to run both metadata ingestion and the profiler in sequence.
    - Task `ingest_openmetadata_views` executes the `metadata ingest` CLI (config in `openmetadata/ingestion.yaml`) to synchronize curated views and generate sample rows.
@@ -53,12 +41,12 @@ Use this stack to iterate on governance playbooks, validate policy controls, and
    - To publish base governance tables, trigger the **governance_base_table_ingestion** DAG; it uses `openmetadata/base_ingestion.yaml` to ingest core relational tables.
    - Scheduling is set to `0 6 * * *` (daily at 06:00). Adjust the DAG to fit your cadence.
 
-5. **Explore the catalog**
+3. **Explore the catalog**
    - Open http://localhost:8585 in a browser.
    - Log in with the default `no_auth` (no credentials required) setup.
    - Search for the `governance-metadata` service to explore the registered views.
 
-6. **Inspect the warehouse (optional)**
+4. **Inspect the warehouse (optional)**
    ```bash
    docker compose exec postgres psql -U metadata_admin -d governance_catalog
    ```
