@@ -1,0 +1,36 @@
+source:
+  type: postgres
+  serviceName: governance-metadata
+  serviceConnection:
+    config:
+      type: Postgres
+      hostPort: postgres:5432
+      username: metadata_admin
+      authType:
+        password: metadata_admin
+      database: governance_catalog
+  sourceConfig:
+    config:
+      type: DatabaseMetadata
+      markDeletedTables: false
+      markDeletedStoredProcedures: false
+      includeTables: true
+      includeViews: true
+      schemaFilterPattern:
+        includes:
+          - clue
+      tableFilterPattern:
+        includes:
+          - cases
+          - defendants
+          - plaintiffs
+sink:
+  type: metadata-rest
+  config: {}
+workflowConfig:
+  openMetadataServerConfig:
+    hostPort: http://openmetadata_server:8585/api
+    authProvider: openmetadata
+    securityConfig:
+      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJlbWFpbCI6ImluZ2VzdGlvbi1ib3RAb3Blbm1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NjQ3NzgxMjcsImV4cCI6bnVsbH0.YXtmT3AQR4ai4p3UTEsy0VrStd7-cnZaIw0-yW_rloTz-QApHJyzMIvLiA9YT9sNHpdapJNWa2MIg-4HQ-lQ4vJ8vhMaS3hCU9KXChSr7Il71prayXweOzMhn-l3fBGPNmAzAoO94vuOi75EOQys-LKZlu-sk5zrHvpjpYty3VY29vb_xbbbm_2dcrIaQRppTf4O69AuhCNGJrPW43Qdrmlb2H3j7_yCHYSYK4Bj-5KZ7UBn6brvlOMyujmTOkkCgekdQRk-wAopjZDUtQo5jYKvOLrxzn26jmM9vPchn04A-2o_V_1fL-4hUfL5f6g-RjszRu8M1tHlRCgHpwXdZw
+  loggerLevel: INFO
