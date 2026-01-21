@@ -11,27 +11,11 @@ source:
       database: governance_catalog
   sourceConfig:
     config:
-      type: Profiler
-      generateSampleData: true
-      profileSample: 100
-      schemaFilterPattern:
-        includes:
-          - clue
-      tableFilterPattern:
-        includes:
-          - cases
-          - defendants
-          - plaintiffs
-processor:
-  type: orm-profiler
-  config:
-    tableConfig:
-      - fullyQualifiedName: governance-metadata.clue.cases
-        profileSample: 100
-      - fullyQualifiedName: governance-metadata.clue.defendents
-        profileSample: 100
-      - fullyQualifiedName: governance-metadata.clue.plaintiffs
-        profileSample: 100
+      type: DatabaseUsage
+      queryLogDuration: 7
+      resultLimit: 1000
+      # Note: queryLogDuration has no impact on PostgreSQL as pg_stat_statements
+      # shows all queries since last reset. Only resultLimit matters.
 sink:
   type: metadata-rest
   config: {}

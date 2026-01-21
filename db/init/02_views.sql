@@ -1,3 +1,5 @@
+\c governance_catalog
+
 CREATE OR REPLACE VIEW vw_catalog_dataset AS
 SELECT
     d.dataset_id,

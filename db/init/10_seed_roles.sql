@@ -1,3 +1,5 @@
+\c governance_catalog
+
 INSERT INTO governance_role (name, description, responsibilities, authority_level)
 VALUES
   ('Data Owner',

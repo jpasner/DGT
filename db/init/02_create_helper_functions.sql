@@ -1,6 +1,8 @@
 -- Helper Functions for CLUE Data Processing
 -- These functions handle data transformation and safe parsing
 
+\c governance_catalog
+
 SET search_path TO clue, public;
 
 -- Function to safely parse dates

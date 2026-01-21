@@ -1,60 +1,142 @@
-openMetadataServerConfig:
-  clusterName: "governance-demo"
-  httpConfiguration:
-    host: "0.0.0.0"
-    port: 8585
-  authConfiguration:
-    provider: "no_auth"
-  database:
-    host: "postgres"
-    port: 5432
-    username: "openmetadata_user"
-    password: "openmetadata_password"
-    databaseName: "openmetadata_db"
-    dbScheme: "postgresql"
-    driverClass: "org.postgresql.Driver"
-    sslMode: "DISABLED"
-    maxPoolSize: 20
-  elasticSearchConfiguration:
-    host: "elasticsearch"
-    port: 9200
-    scheme: "http"
-    trustStoreConfig: null
-  eventHandlerConfiguration:
-    enabled: true
-    server: "kafka"
-    clusterName: "governance-demo"
-    config:
-      bootstrapServers: "kafka:9092"
-      securityConfig: null
-      adminClientConfig: {}
-      producerConfig: {}
-      consumerConfig: {}
-    topics:
-      entityChangeEvent: "om_entity_change"
-      entityExtensionEvent: "om_entity_extension"
-      ingestionPipelineStatus: "om_ingestion_pipeline_status"
-      taskWorkflow: "om_task_workflow"
-      metadataJob: "om_metadata_job"
-  pipelineServiceClientConfiguration:
-    enabled: false
-    supportsUpdates: false
-    className: "org.openmetadata.service.clients.pipeline.MetadataServerClient"
-  changeEventConfig:
-    aggregatorEnabled: true
-  lineageConfiguration:
-    enabled: true
-  searchType: "elasticsearch"
-  elasticsearchMigrationConfiguration:
-    reindexAll: false
-    forceReindex: false
-  uiServer:
-    host: "http://localhost"
-    port: 8585
+#  OpenMetadata Configuration for 1.11.4
 
+clusterName: ${OPENMETADATA_CLUSTER_NAME:-governance-demo}
+
+swagger:
+  resourcePackage: org.openmetadata.service.resources
+
+server:
+  applicationContextPath: /
+  rootPath: /api/*
+  applicationConnectors:
+    - type: http
+      bindHost: 0.0.0.0
+      port: 8585
+  adminConnectors:
+    - type: http
+      bindHost: 0.0.0.0
+      port: 8586
+  maxThreads: 100
+
+# Logging settings
 logging:
-  level: INFO
+  level: ${LOG_LEVEL:-INFO}
   appenders:
     - type: console
       threshold: INFO
+      logFormat: "%level [%d{ISO8601,UTC}] [%t] %logger{5} - %msg%n"
       timeZone: UTC
+    - type: file
+      currentLogFilename: ./logs/openmetadata.log
+      archivedLogFilenamePattern: ./logs/openmetadata-%d{yyyy-MM-dd}-%i.log.gz
+      archivedFileCount: 7
+      timeZone: UTC
+      maxFileSize: 50MB
+
+# Database Configuration - PostgreSQL
+database:
+  driverClass: ${DB_DRIVER_CLASS:-org.postgresql.Driver}
+  user: ${DB_USER:-openmetadata_user}
+  password: ${DB_USER_PASSWORD:-openmetadata_password}
+  url: jdbc:${DB_SCHEME:-postgresql}://${DB_HOST:-localhost}:${DB_PORT:-5432}/${OM_DATABASE:-openmetadata_db}
+  maxSize: ${DB_CONNECTION_POOL_MAX_SIZE:-50}
+  minSize: ${DB_CONNECTION_POOL_MIN_SIZE:-10}
+
+# Migration Configuration (Required for version 1.11.4+)
+migrationConfiguration:
+  flywayPath: "./bootstrap/sql/migrations/flyway"
+  nativePath: "./bootstrap/sql/migrations/native"
+  extensionPath: ""
+
+# Authentication Configuration - Default with self signup enabled
+authorizerConfiguration:
+  className: org.openmetadata.service.security.DefaultAuthorizer
+  containerRequestFilter: org.openmetadata.service.security.JwtFilter
+  adminPrincipals: [admin]
+  principalDomain: "open-metadata.org"
+  enforcePrincipalDomain: false
+  enableSecureSocketConnection: false
+
+authenticationConfiguration:
+  clientType: public
+  provider: basic
+  publicKeyUrls: [http://localhost:8585/api/v1/system/config/jwks]
+  authority: https://accounts.google.com
+  enableSelfSignup: true
+  jwtPrincipalClaims: [email, preferred_username, sub]
+
+jwtTokenConfiguration:
+  rsapublicKeyFilePath: ./conf/public_key.der
+  rsaprivateKeyFilePath: ./conf/private_key.der
+  jwtissuer: open-metadata.org
+  keyId: Gb389a-9f76-gdjs-a92j-0242bk94356
+
+# Elasticsearch Configuration
+elasticsearch:
+  searchType: elasticsearch
+  host: ${ELASTICSEARCH_HOST:-localhost}
+  port: ${ELASTICSEARCH_PORT:-9200}
+  scheme: ${ELASTICSEARCH_SCHEME:-http}
+  username: ${ELASTICSEARCH_USER:-""}
+  password: ${ELASTICSEARCH_PASSWORD:-""}
+  connectionTimeoutSecs: 10
+  socketTimeoutSecs: 60
+  batchSize: 100
+
+# Event Monitoring Configuration
+eventMonitoringConfiguration:
+  eventMonitor: prometheus
+  batchSize: 10
+
+# Event Handler Configuration
+eventHandlerConfiguration:
+  eventHandlerClassNames:
+    - "org.openmetadata.service.events.AuditEventHandler"
+    - "org.openmetadata.service.events.ChangeEventHandler"
+
+# Pipeline Service Client Configuration
+pipelineServiceClientConfiguration:
+  enabled: true
+  className: org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient
+  apiEndpoint: ${PIPELINE_SERVICE_CLIENT_ENDPOINT:-http://localhost:8080}
+  metadataApiEndpoint: ${SERVER_HOST_API_URL:-http://localhost:8585/api}
+  hostIp: ""
+  healthCheckInterval: 300
+  verifySSL: no-ssl
+  secretsManagerLoader: noop
+  parameters:
+    username: ${AIRFLOW_USERNAME:-admin}
+    password: ${AIRFLOW_PASSWORD:-admin}
+    timeout: 10
+
+# Fernet Key for encryption
+fernetConfiguration:
+  fernetKey: ${FERNET_KEY:-jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA=}
+
+# Secrets Manager Configuration
+secretsManagerConfiguration:
+  secretsManager: db
+  prefix: ""
+  tags: []
+
+# Health Check Configuration
+health:
+  delayedShutdownHandlerEnabled: true
+  shutdownWaitPeriod: 1s
+  healthChecks:
+    - name: OpenMetadataServerHealthCheck
+      critical: true
+      schedule:
+        checkInterval: 2500ms
+        downtimeInterval: 10s
+        failureAttempts: 2
+        successAttempts: 1
+
+# Operational Config
+operationalConfig:
+  enable: ${OPERATIONAL_CONFIG_ENABLED:-false}
+  operationsConfigFile: "./conf/operations.yaml"
+
+# Web Configuration
+web:
+  uriPath: "/api"

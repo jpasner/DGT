@@ -4,7 +4,7 @@ source:
   serviceConnection:
     config:
       type: Postgres
-      hostPort: postgres:5432
+      hostPort: postgresql:5432
       username: metadata_admin
       authType:
         password: metadata_admin

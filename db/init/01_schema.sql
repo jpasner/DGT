@@ -1,3 +1,10 @@
+-- Connect to governance_catalog database
+\c governance_catalog
+
+-- Create extensions if not already created
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 CREATE TABLE IF NOT EXISTS agency (
     agency_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,

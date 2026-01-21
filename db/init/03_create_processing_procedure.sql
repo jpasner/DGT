@@ -1,6 +1,8 @@
 -- Processing Procedure for CLUE Data
 -- This procedure processes raw source data into final tables
 
+\c governance_catalog
+
 SET search_path TO clue, public;
 
 -- Procedure to process a specific load_id

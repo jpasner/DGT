@@ -18,7 +18,7 @@ with DAG(
     dag_id="clue_metadata_ingestion",
     description="Load curated clue views into OpenMetadata",
     default_args=DEFAULT_ARGS,
-    schedule_interval="0 6 * * *",
+    schedule="0 6 * * *",
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=["openmetadata", "governance"],

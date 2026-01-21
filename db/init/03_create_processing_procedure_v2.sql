@@ -1,6 +1,8 @@
 -- Processing Procedure for CLUE Data (Simplified version)
 -- This procedure processes raw source data into final tables
 
+\c governance_catalog
+
 SET search_path TO clue, public;
 
 DROP PROCEDURE IF EXISTS clue.process_case_data(INTEGER);

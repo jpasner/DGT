@@ -2,6 +2,9 @@
 -- This schema supports ingesting multiple CSV files from different counties/courts
 -- Database: governance_catalog
 
+-- Connect to governance_catalog database
+\c governance_catalog
+
 -- Create schema for CLUE data
 CREATE SCHEMA IF NOT EXISTS clue;
 
