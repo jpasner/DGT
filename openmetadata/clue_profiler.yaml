@@ -12,8 +12,6 @@ source:
   sourceConfig:
     config:
       type: Profiler
-      generateSampleData: true
-      profileSample: 100
       schemaFilterPattern:
         includes:
           - clue
@@ -26,11 +24,11 @@ processor:
   type: orm-profiler
   config:
     tableConfig:
-      - fullyQualifiedName: governance-metadata.clue.cases
+      - fullyQualifiedName: governance-metadata.governance_catalog.clue.cases
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.clue.defendents
+      - fullyQualifiedName: governance-metadata.governance_catalog.clue.defendants
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.clue.plaintiffs
+      - fullyQualifiedName: governance-metadata.governance_catalog.clue.plaintiffs
         profileSample: 100
 sink:
   type: metadata-rest
@@ -40,5 +38,5 @@ workflowConfig:
     hostPort: http://openmetadata_server:8585/api
     authProvider: openmetadata
     securityConfig:
-      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJlbWFpbCI6ImluZ2VzdGlvbi1ib3RAb3Blbm1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NjQ3NzgxMjcsImV4cCI6bnVsbH0.YXtmT3AQR4ai4p3UTEsy0VrStd7-cnZaIw0-yW_rloTz-QApHJyzMIvLiA9YT9sNHpdapJNWa2MIg-4HQ-lQ4vJ8vhMaS3hCU9KXChSr7Il71prayXweOzMhn-l3fBGPNmAzAoO94vuOi75EOQys-LKZlu-sk5zrHvpjpYty3VY29vb_xbbbm_2dcrIaQRppTf4O69AuhCNGJrPW43Qdrmlb2H3j7_yCHYSYK4Bj-5KZ7UBn6brvlOMyujmTOkkCgekdQRk-wAopjZDUtQo5jYKvOLrxzn26jmM9vPchn04A-2o_V_1fL-4hUfL5f6g-RjszRu8M1tHlRCgHpwXdZw
+      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJyb2xlcyI6WyJJbmdlc3Rpb25Cb3RSb2xlIl0sImVtYWlsIjoiaW5nZXN0aW9uLWJvdEBvcGVuLW1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NjkwMTcxNDIsImV4cCI6bnVsbH0.uo4tIIeuf7Vpnvl_RohxotaUS-AR49Shh5oh9QpGXd4BOJlow7JSBrEg4U1HTl5XoEIKVJ64OA0LZOwxKcJTK02BTRxiLClr_twGf6whukjDLZKz9Vu_tvkxyi6NYRG-g-u1RYnuAMdEMKQUE7JhqZBGCZSOlvDom4q6MslmrkLpIWpgAHNlkcOSmCDUTdycntlLhbuw54yaXCkkalrB_Xu1MD2avJeB8kPSFbRHs4yVGNcMhxCjxiCD5FHzeiNoO4NskwCxwhllR9wROMZITUt0mtsmiFBkYWW2NtK6TOXE8satmvX03Cmx40je5XGWvw2z0qhOQ2Br2KjJXjVeWg
   loggerLevel: INFO

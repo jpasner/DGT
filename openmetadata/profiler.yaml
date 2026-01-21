@@ -12,8 +12,6 @@ source:
   sourceConfig:
     config:
       type: Profiler
-      generateSampleData: true
-      profileSample: 100
       schemaFilterPattern:
         includes:
           - public
@@ -46,51 +44,51 @@ processor:
   type: orm-profiler
   config:
     tableConfig:
-      - fullyQualifiedName: governance-metadata.public.vw_catalog_dataset
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.vw_catalog_dataset
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.vw_permissible_use
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.vw_permissible_use
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.vw_governance_assignments
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.vw_governance_assignments
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.vw_data_access_request
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.vw_data_access_request
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.agency
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.agency
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.dataset
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.dataset
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.distribution
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.distribution
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.tag
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.tag
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.dataset_tag
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.dataset_tag
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.policy
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.policy
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.policy_clause
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.policy_clause
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.dataset_policy
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.dataset_policy
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.permissible_use
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.permissible_use
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.permissible_use_condition
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.permissible_use_condition
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.security_marking
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.security_marking
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.dataset_security_marking
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.dataset_security_marking
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.governance_role
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.governance_role
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.person
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.person
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.role_assignment
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.role_assignment
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.decision_log
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.decision_log
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.data_access_request
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.data_access_request
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.dataset_lineage
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.dataset_lineage
         profileSample: 100
-      - fullyQualifiedName: governance-metadata.public.glossary_term
+      - fullyQualifiedName: governance-metadata.governance_catalog.public.glossary_term
         profileSample: 100
 sink:
   type: metadata-rest
@@ -100,5 +98,5 @@ workflowConfig:
     hostPort: http://openmetadata_server:8585/api
     authProvider: openmetadata
     securityConfig:
-      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJlbWFpbCI6ImluZ2VzdGlvbi1ib3RAb3Blbm1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NjA5OTg2NzQsImV4cCI6bnVsbH0.VLs8nmxcUcAN4q8ST1L8dVe5THWKmitmR8um6Gvuer3luh262aOx9kb8MNcYVyMf62DP1y3l0DTkPWeGk6R_DmYOG4X3gfHelokOGOWEFJpMwBivMfEujyZelC1-bxpgZnT-k5tTFFv68N-84fv2qZbqA3uYrEYXPAZTi0n_QW83GQP-nP2zZuNM7v0z6Xo-u8GTaXyIuy0oq7-iTh1SrJbV0n4HqiaNtB6kPGscN3RD5eQgshyn3YgS7p4zc4XZNMJrY9HU1rO6b9vH_onsaIvyyJ4BgKpaVZF10kR70gqOUNvp67zpBMV7SlfRs3Laa8DRRRYd3KLy23igEYjDuA
+      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJyb2xlcyI6WyJJbmdlc3Rpb25Cb3RSb2xlIl0sImVtYWlsIjoiaW5nZXN0aW9uLWJvdEBvcGVuLW1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NjkwMTcxNDIsImV4cCI6bnVsbH0.uo4tIIeuf7Vpnvl_RohxotaUS-AR49Shh5oh9QpGXd4BOJlow7JSBrEg4U1HTl5XoEIKVJ64OA0LZOwxKcJTK02BTRxiLClr_twGf6whukjDLZKz9Vu_tvkxyi6NYRG-g-u1RYnuAMdEMKQUE7JhqZBGCZSOlvDom4q6MslmrkLpIWpgAHNlkcOSmCDUTdycntlLhbuw54yaXCkkalrB_Xu1MD2avJeB8kPSFbRHs4yVGNcMhxCjxiCD5FHzeiNoO4NskwCxwhllR9wROMZITUt0mtsmiFBkYWW2NtK6TOXE8satmvX03Cmx40je5XGWvw2z0qhOQ2Br2KjJXjVeWg
   loggerLevel: INFO

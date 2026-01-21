@@ -225,3 +225,6 @@ CREATE TABLE IF NOT EXISTS glossary_term (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS glossary_term_name_uniq ON glossary_term (LOWER(name));
+
+-- Grant SELECT permissions to metadata_admin for profiling
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO metadata_admin;
