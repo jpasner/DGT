@@ -5,10 +5,10 @@
 set -e
 
 # Configuration
-DB_CONTAINER="governance-postgres"
+DB_CONTAINER="openmetadata_postgresql"
 DB_NAME="governance_catalog"
-DB_USER="metadata_admin"
-DB_PASSWORD="metadata_admin"
+DB_USER="postgres"
+DB_PASSWORD="postgres"
 DATA_DIR="/tmp/clue_data"
 CASE_TYPES_FILE="MD Clue Case Types in Redivis - Sheet1.csv"
 
@@ -75,10 +75,25 @@ fi
 
 echo -e "${GREEN}✓ Copied $COUNT court data file(s)${NC}"
 
+# Preprocess case types CSV to remove duplicate header lines and fix line endings
+echo -e "${YELLOW}Step 2b: Preprocessing CSV files...${NC}"
+docker exec $DB_CONTAINER bash -c "
+    cd $DATA_DIR
+    # Convert Windows line endings to Unix and remove duplicate headers
+    sed -i 's/\r$//' '$CASE_TYPES_BASENAME'
+    head -1 '$CASE_TYPES_BASENAME' > tmp_case_types.csv
+    tail -n +2 '$CASE_TYPES_BASENAME' | grep -v '^case_count,' >> tmp_case_types.csv
+    mv tmp_case_types.csv '$CASE_TYPES_BASENAME'
+    echo \"Preprocessed case types: \$(wc -l < '$CASE_TYPES_BASENAME') lines\"
+"
+echo -e "${GREEN}✓ CSV preprocessing complete${NC}"
+
 # Load case types (one-time)
 echo -e "${YELLOW}Step 3: Loading case types lookup table...${NC}"
-docker exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
-    \COPY clue.case_types FROM '$DATA_DIR/$CASE_TYPES_BASENAME' WITH (FORMAT csv, HEADER true, NULL 'NA');
+docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
+    TRUNCATE clue.case_types CASCADE;
+    COPY clue.case_types (case_count, case_type, subtype, notes, col5, col6, col7)
+    FROM '$DATA_DIR/$CASE_TYPES_BASENAME' WITH (FORMAT csv, HEADER true, NULL 'NA');
     SELECT COUNT(*) as case_type_count FROM clue.case_types;
 EOSQL
 
@@ -87,11 +102,11 @@ echo -e "${GREEN}✓ Case types loaded${NC}"
 # Load each court data file
 echo -e "${YELLOW}Step 4: Loading court data files...${NC}"
 
-docker exec $DB_CONTAINER bash <<-'EOSCRIPT'
+docker exec -i $DB_CONTAINER bash <<-'EOSCRIPT'
 set -e
 DATA_DIR=/tmp/clue_data
 DB_NAME=governance_catalog
-DB_USER=metadata_admin
+DB_USER=postgres
 
 cd $DATA_DIR
 
@@ -103,7 +118,7 @@ for file in "Maryland Data from"*.csv; do
         FILE_SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
 
         # Insert load metadata and get load_id
-        LOAD_ID=$(psql -U $DB_USER -d $DB_NAME -t -A -c "
+        LOAD_ID=$(psql -U $DB_USER -d $DB_NAME -t -A -q -c "
             INSERT INTO clue.file_load_metadata (
                 file_name, file_path, file_size_bytes, load_status
             ) VALUES (
@@ -113,13 +128,13 @@ for file in "Maryland Data from"*.csv; do
             SET load_started_at = CURRENT_TIMESTAMP,
                 load_status = 'started'
             RETURNING load_id;
-        ")
+        " | tail -1 | tr -d '[:space:]')
 
         echo "  Load ID: $LOAD_ID"
 
         # Load data
         psql -U $DB_USER -d $DB_NAME <<-EOSQL
-            \COPY clue.source_data (
+            COPY clue.source_data (
                 row_num, id, case_number, caption, name, dob, party_type, court,
                 court_id, case_type, filing_date, status, court_system, checksum,
                 misc, last_scrape, not_found_at, created_at, updated_at,
@@ -159,7 +174,7 @@ echo -e "${GREEN}✓ All files loaded into source_data${NC}"
 
 # Process the data
 echo -e "${YELLOW}Step 5: Processing data into final tables...${NC}"
-docker exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
+docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
     CALL clue.process_case_data();
 EOSQL
 
@@ -167,7 +182,7 @@ echo -e "${GREEN}✓ Data processing complete${NC}"
 
 # Show summary
 echo -e "${YELLOW}Step 6: Summary Statistics${NC}"
-docker exec $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
+docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
     SELECT
         'Files Loaded' as metric,
         COUNT(*)::text as count

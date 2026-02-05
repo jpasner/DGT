@@ -163,21 +163,14 @@ BEGIN
         AND sd.defendant != 'NA'
     ),
     defendant_array AS (
-        SELECT
-            row_id,
-            defendant_elem AS defendant
+        SELECT row_id, elem AS defendant
         FROM defendant_json
-        CROSS JOIN LATERAL (
-            SELECT
-                CASE
-                    WHEN jsonb_typeof(defendant) = 'array' THEN elem
-                    ELSE defendant
-                END AS defendant_elem
-            FROM (
-                SELECT COALESCE(jsonb_array_elements(CASE WHEN jsonb_typeof(defendant) = 'array' THEN defendant ELSE NULL END), defendant) AS elem
-            ) sub
-        ) AS expanded
-        WHERE defendant IS NOT NULL
+        CROSS JOIN LATERAL jsonb_array_elements(defendant) AS elem
+        WHERE jsonb_typeof(defendant) = 'array'
+        UNION ALL
+        SELECT row_id, defendant
+        FROM defendant_json
+        WHERE jsonb_typeof(defendant) != 'array'
     )
     INSERT INTO clue.defendants (
         row_id, name, city, state, zip, address, address_ln1,
@@ -214,21 +207,14 @@ BEGIN
         AND sd.plaintiff != 'NA'
     ),
     plaintiff_array AS (
-        SELECT
-            row_id,
-            plaintiff_elem AS plaintiff
+        SELECT row_id, elem AS plaintiff
         FROM plaintiff_json
-        CROSS JOIN LATERAL (
-            SELECT
-                CASE
-                    WHEN jsonb_typeof(plaintiff) = 'array' THEN elem
-                    ELSE plaintiff
-                END AS plaintiff_elem
-            FROM (
-                SELECT COALESCE(jsonb_array_elements(CASE WHEN jsonb_typeof(plaintiff) = 'array' THEN plaintiff ELSE NULL END), plaintiff) AS elem
-            ) sub
-        ) AS expanded
-        WHERE plaintiff IS NOT NULL
+        CROSS JOIN LATERAL jsonb_array_elements(plaintiff) AS elem
+        WHERE jsonb_typeof(plaintiff) = 'array'
+        UNION ALL
+        SELECT row_id, plaintiff
+        FROM plaintiff_json
+        WHERE jsonb_typeof(plaintiff) != 'array'
     )
     INSERT INTO clue.plaintiffs (
         row_id, name, city, state, zip, address, address_ln1,
