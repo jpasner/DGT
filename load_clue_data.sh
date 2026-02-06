@@ -226,6 +226,20 @@ echo -e "${YELLOW}Step 7: Cleanup${NC}"
 docker exec $DB_CONTAINER rm -rf $DATA_DIR
 echo -e "${GREEN}✓ Temporary files cleaned up${NC}"
 
+# Re-run processing to capture lineage in pg_stat_statements
+echo -e "${YELLOW}Step 8: Refresh data for lineage capture${NC}"
+docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
+    -- Truncate target tables to re-process
+    TRUNCATE clue.cases CASCADE;
+
+    -- Reset load status
+    UPDATE clue.file_load_metadata SET load_status = 'completed';
+
+    -- Re-run processing to capture lineage queries in pg_stat_statements
+    CALL clue.process_case_data();
+EOSQL
+echo -e "${GREEN}✓ Data refreshed for lineage capture${NC}"
+
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Data loading complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
