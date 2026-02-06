@@ -11,7 +11,10 @@ services:
     container_name: openmetadata_postgresql
     image: docker.getcollate.io/openmetadata/postgresql:1.9.17
     restart: always
-    command: "--work_mem=10MB"
+    command: >
+      -c work_mem=10MB
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
