@@ -1,5 +1,5 @@
 source:
-  type: bigquery-lineage
+  type: postgres-lineage
   serviceName: governance-metadata
   serviceConnection:
     config:
@@ -12,33 +12,15 @@ source:
   sourceConfig:
     config:
       type: DatabaseLineage
-      # Number of days to look back
       queryLogDuration: 30
       parsingTimeoutLimit: 300
-      # filterCondition: query_text not ilike '--- metabase query %'
       resultLimit: 1000
-      # If instead of getting the query logs from the database we want to pass a file with the queries
-      # queryLogFilePath: /tmp/query_log/file_path
       databaseFilterPattern:
         includes:
-          - governance_catalog
-      #     - database1
-      #     - database2
-      #   excludes:
-      #     - database3
-      #     - database4
+          - ^governance_catalog$
       schemaFilterPattern:
         includes:
-          - clue
-      #     - schema2
-      #   excludes:
-      #     - schema3
-      #     - schema4
-      tableFilterPattern:
-        includes:
-          - cases
-          - defendants
-          - plaintiffs
+          - ^clue$
       #   excludes:
       #     - table3
       #     - table4

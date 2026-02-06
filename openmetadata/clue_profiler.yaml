@@ -14,12 +14,7 @@ source:
       type: Profiler
       schemaFilterPattern:
         includes:
-          - clue
-      tableFilterPattern:
-        includes:
-          - cases
-          - defendants
-          - plaintiffs
+          - ^clue$
 processor:
   type: orm-profiler
   config:
