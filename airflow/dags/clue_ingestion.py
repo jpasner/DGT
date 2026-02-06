@@ -37,4 +37,11 @@ with DAG(
         ),
     )
 
-    ingest_views >> profile_views
+    ingest_lineage = BashOperator(
+        task_id="ingest_openmetadata_lineage",
+        bash_command=(
+            "metadata ingest -c /opt/airflow/openmetadata/clue_lineage.yaml"
+        ),
+    )
+
+    ingest_views >> profile_views >> ingest_lineage
