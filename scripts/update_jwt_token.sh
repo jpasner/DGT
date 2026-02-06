@@ -65,7 +65,16 @@ echo -e "${YELLOW}Updating JWT tokens...${NC}"
 for file in $YAML_FILES; do
     # Use sed to replace the jwtToken value
     # Match "jwtToken: " followed by any characters until end of line
-    if sed -i "s|^\(\s*jwtToken:\s*\).*$|\1$NEW_TOKEN|" "$file"; then
+    # Note: Using portable syntax for both macOS (BSD sed) and Linux (GNU sed)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS BSD sed: requires -i '' and uses different regex syntax
+        sed -i '' "s|^\\([[:space:]]*jwtToken:[[:space:]]*\\).*$|\\1$NEW_TOKEN|" "$file"
+    else
+        # Linux GNU sed
+        sed -i "s|^\\([[:space:]]*jwtToken:[[:space:]]*\\).*$|\\1$NEW_TOKEN|" "$file"
+    fi
+
+    if [ $? -eq 0 ]; then
         echo -e "  ${GREEN}Updated:${NC} $file"
     else
         echo -e "  ${RED}Failed:${NC} $file"
