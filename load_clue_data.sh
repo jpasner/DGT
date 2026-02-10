@@ -1,6 +1,7 @@
 #!/bin/bash
 # Extensible CLUE Data Loader
 # This script loads multiple Maryland court case CSV files into PostgreSQL
+# and creates views for OpenMetadata lineage tracking
 
 set -e
 
@@ -11,6 +12,7 @@ DB_USER="postgres"
 DB_PASSWORD="postgres"
 DATA_DIR="/tmp/clue_data"
 CASE_TYPES_FILE="MD Clue Case Types in Redivis - Sheet1.csv"
+TRANSFORM_SCRIPT="clue_maryland_postgres.sql"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -28,12 +30,17 @@ if ! docker ps | grep -q "$DB_CONTAINER"; then
     exit 1
 fi
 
+# Check if transform script exists
+if [ ! -f "$TRANSFORM_SCRIPT" ]; then
+    echo -e "${RED}Error: Transform script not found: $TRANSFORM_SCRIPT${NC}"
+    exit 1
+fi
+
 echo -e "${YELLOW}Step 1: Setting up database schema...${NC}"
 
-# Execute schema setup scripts in order
+# Execute schema setup scripts in order (excluding the old processing procedure)
 for script in db/init/01_create_clue_schema.sql \
-              db/init/02_create_helper_functions.sql \
-              db/init/03_create_processing_procedure.sql; do
+              db/init/02_create_helper_functions.sql; do
     if [ -f "$script" ]; then
         echo "  Executing: $script"
         docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME < "$script"
@@ -172,13 +179,12 @@ EOSCRIPT
 
 echo -e "${GREEN}✓ All files loaded into source_data${NC}"
 
-# Process the data
-echo -e "${YELLOW}Step 5: Processing data into final tables...${NC}"
-docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
-    CALL clue.process_case_data();
-EOSQL
+# Process the data using views for lineage tracking
+echo -e "${YELLOW}Step 5: Creating transformation views and final tables...${NC}"
+echo "  Running: $TRANSFORM_SCRIPT"
+docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME < "$TRANSFORM_SCRIPT"
 
-echo -e "${GREEN}✓ Data processing complete${NC}"
+echo -e "${GREEN}✓ Views and final tables created${NC}"
 
 # Show summary
 echo -e "${YELLOW}Step 6: Summary Statistics${NC}"
@@ -197,17 +203,17 @@ docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
     SELECT
         'Processed Cases',
         COUNT(*)::text
-    FROM clue.cases
+    FROM clue.final_cases
     UNION ALL
     SELECT
         'Defendants',
         COUNT(*)::text
-    FROM clue.defendants
+    FROM clue.final_defendants
     UNION ALL
     SELECT
         'Plaintiffs',
         COUNT(*)::text
-    FROM clue.plaintiffs;
+    FROM clue.final_plaintiffs;
 
     \echo ''
     \echo 'Case Categories:'
@@ -215,10 +221,14 @@ docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
         category,
         COUNT(*) as count,
         ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) as percentage
-    FROM clue.cases
+    FROM clue.final_cases
     WHERE category IS NOT NULL
     GROUP BY category
     ORDER BY count DESC;
+
+    \echo ''
+    \echo 'Views created for lineage tracking:'
+    SELECT viewname FROM pg_views WHERE schemaname = 'clue' ORDER BY viewname;
 EOSQL
 
 # Cleanup
@@ -226,27 +236,22 @@ echo -e "${YELLOW}Step 7: Cleanup${NC}"
 docker exec $DB_CONTAINER rm -rf $DATA_DIR
 echo -e "${GREEN}✓ Temporary files cleaned up${NC}"
 
-# Re-run processing to capture lineage in pg_stat_statements
-echo -e "${YELLOW}Step 8: Refresh data for lineage capture${NC}"
-docker exec -i $DB_CONTAINER psql -U $DB_USER -d $DB_NAME <<-EOSQL
-    -- Truncate target tables to re-process
-    TRUNCATE clue.cases CASCADE;
-
-    -- Reset load status
-    UPDATE clue.file_load_metadata SET load_status = 'completed';
-
-    -- Re-run processing to capture lineage queries in pg_stat_statements
-    CALL clue.process_case_data();
-EOSQL
-echo -e "${GREEN}✓ Data refreshed for lineage capture${NC}"
-
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Data loading complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
+echo ""
+echo "Lineage tracking:"
+echo "  - 26 views created in clue schema for full lineage visibility"
+echo "  - Run the clue_metadata_ingestion DAG to capture lineage in OpenMetadata"
 echo ""
 echo "Connect to database:"
 echo "  docker exec -it $DB_CONTAINER psql -U $DB_USER -d $DB_NAME"
 echo ""
 echo "Query examples:"
-echo "  SELECT * FROM clue.cases LIMIT 10;"
+echo "  SELECT * FROM clue.final_cases LIMIT 10;"
+echo "  SELECT * FROM clue.final_defendants LIMIT 10;"
+echo "  SELECT * FROM clue.final_plaintiffs LIMIT 10;"
 echo "  SELECT * FROM clue.file_load_metadata;"
+echo ""
+echo "View the lineage chain:"
+echo "  SELECT viewname FROM pg_views WHERE schemaname = 'clue' ORDER BY viewname;"
