@@ -283,6 +283,7 @@ services:
       - ./openmetadata/clue_ingestion.yaml:/opt/airflow/openmetadata/clue_ingestion.yaml:rw
       - ./openmetadata/clue_profiler.yaml:/opt/airflow/openmetadata/clue_profiler.yaml:rw
       - ./openmetadata/clue_lineage.yaml:/opt/airflow/openmetadata/clue_lineage.yaml:rw
+      - ./openmetadata/clue_classification.yaml:/opt/airflow/openmetadata/clue_classification.yaml:rw
 
 networks:
   app_net:

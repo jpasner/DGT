@@ -44,4 +44,11 @@ with DAG(
         ),
     )
 
-    ingest_views >> profile_views >> ingest_lineage
+    ingest_classification = BashOperator(
+        task_id="ingest_openmetadata_classification",
+        bash_command=(
+            "metadata classify -c /opt/airflow/openmetadata/clue_classification.yaml"
+        ),
+    )
+
+    ingest_views >> profile_views >> ingest_lineage >> ingest_classification

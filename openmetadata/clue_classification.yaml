@@ -11,14 +11,12 @@ source:
       database: governance_catalog
   sourceConfig:
     config:
-      type: Profiler
-      computeMetrics: true
-      profileSample: 85
+      type: AutoClassification
+      storeSampleData: true
+      enableAutoClassification: true
       schemaFilterPattern:
         includes:
           - ^clue$
-      # Profile both tables and views
-      includeViews: true
 processor:
   type: orm-profiler
   config:
@@ -64,5 +62,5 @@ workflowConfig:
     hostPort: http://openmetadata_server:8585/api
     authProvider: openmetadata
     securityConfig:
-      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJyb2xlcyI6WyJJbmdlc3Rpb25Cb3RSb2xlIl0sImVtYWlsIjoiaW5nZXN0aW9uLWJvdEBvcGVuLW1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NjkwMTcxNDIsImV4cCI6bnVsbH0.uo4tIIeuf7Vpnvl_RohxotaUS-AR49Shh5oh9QpGXd4BOJlow7JSBrEg4U1HTl5XoEIKVJ64OA0LZOwxKcJTK02BTRxiLClr_twGf6whukjDLZKz9Vu_tvkxyi6NYRG-g-u1RYnuAMdEMKQUE7JhqZBGCZSOlvDom4q6MslmrkLpIWpgAHNlkcOSmCDUTdycntlLhbuw54yaXCkkalrB_Xu1MD2avJeB8kPSFbRHs4yVGNcMhxCjxiCD5FHzeiNoO4NskwCxwhllR9wROMZITUt0mtsmiFBkYWW2NtK6TOXE8satmvX03Cmx40je5XGWvw2z0qhOQ2Br2KjJXjVeWg
+      jwtToken: eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImluZ2VzdGlvbi1ib3QiLCJyb2xlcyI6WyJJbmdlc3Rpb25Cb3RSb2xlIl0sImVtYWlsIjoiaW5nZXN0aW9uLWJvdEBvcGVuLW1ldGFkYXRhLm9yZyIsImlzQm90Ijp0cnVlLCJ0b2tlblR5cGUiOiJCT1QiLCJpYXQiOjE3NzA3NTIzOTksImV4cCI6bnVsbH0.pjMAU5U9PyCNOEwObBjfsWl_o3mBle2e-7PI3PpqdtFII0vdWKKnnQThfOQf4gVaN_M5pXPAuefB7J37yEEi6VD9xVUviS_nAzwhy4JVCaNtrZpi1EViSaOQpQCaWkr4_kizvU1bKBjqvvSKBuvsquLX4MTT34bla9IVj7GJLoUIVXZJqfG8RvVei_P1VUqGLVEV8HcEqYemyjTN8iCRnX86xBOJFEIqCDTp-oCGJ0eU2uwUxEViB0jTn6EoTxEasXPGGPTcfB11UIDjYgKn5htLzIyFOin69OSF4Kt2JI2uabUUShR-39fPExI5KzI0yzdFyLenh1igBZcGT3lOVA
   loggerLevel: INFO
